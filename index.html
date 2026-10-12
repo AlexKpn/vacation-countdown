@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Vacation Countdown</title>
+    <style>
+        /* Google Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background: linear-gradient(135deg, #0f172a, #1e1b4b, #311042);
+            color: #fff;
+            position: relative;
+        }
+
+        /* Background Animation Canvas */
+        #bg-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Ambient Floating Glow Orbs */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: 2;
+            animation: float 12s infinite alternate ease-in-out;
+        }
+
+        .orb-1 {
+            width: 320px;
+            height: 320px;
+            background: rgba(236, 72, 153, 0.4);
+            top: 10%;
+            left: 15%;
+        }
+
+        .orb-2 {
+            width: 400px;
+            height: 400px;
+            background: rgba(59, 130, 246, 0.4);
+            bottom: 10%;
+            right: 15%;
+            animation-delay: -6s;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(30px, -50px) scale(1.1); }
+            100% { transform: translate(-30px, 40px) scale(0.9); }
+        }
+
+        /* Countdown Glass Container */
+        .container {
+            position: relative;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 24px;
+            padding: 3rem 2.5rem;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            max-width: 700px;
+            width: 90%;
+        }
+
+        .tag {
+            display: inline-block;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #38bdf8;
+            margin-bottom: 0.5rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            background: linear-gradient(to right, #ffffff, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Countdown Grid */
+        .countdown-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.2rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .time-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.2rem 0.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.3s ease;
+        }
+
+        .time-box:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .number {
+            font-size: 2.8rem;
+            font-weight: 700;
+            line-height: 1;
+            color: #fff;
+        }
+
+        .label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #cbd5e1;
+            margin-top: 0.5rem;
+        }
+
+        /* Date Picker / Controls */
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .controls input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.6rem 1rem;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .controls input[type="text"] {
+            width: 180px;
+        }
+
+        .controls input[type="date"] {
+            color-scheme: dark;
+            cursor: pointer;
+        }
+
+        .controls input:focus {
+            border-color: #38bdf8;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+        }
+
+        /* Pulse animation on number update */
+        .pop {
+            animation: pop 0.3s ease;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); color: #38bdf8; }
+            100% { transform: scale(1); }
+        }
+
+        @media (max-width: 600px) {
+            .countdown-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            h1 { font-size: 1.8rem; }
+            .number { font-size: 2.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Animated Particles Background Canvas -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- Ambient Glowing Orbs -->
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<!-- Main Countdown Card -->
+<div class="container">
+    <span class="tag">✈️ Paradise Awaits</span>
+    <h1 id="destination-title">Select Your Vacation</h1>
+
+    <div class="countdown-grid">
+        <div class="time-box">
+            <span class="number" id="days">--</span>
+            <span class="label">Days</span>
+        </div>
+        <div class="time-box">
+            <span class="number" id="hours">--</span>
+            <span class="label">Hours</span>
+        </div>
+        <div class="time-box">
+            <span class="number" id="minutes">--</span>
+            <span class="label">Minutes</span>
+        </div>
+        <div class="time-box">
+            <span class="number" id="seconds">--</span>
+            <span class="label">Seconds</span>
+        </div>
+    </div>
+
+    <!-- Customization Controls -->
+    <div class="controls">
+        <input type="text" id="trip-input" placeholder="Destination..." value="" />
+        <input type="date" id="date-input" autofocus />
+    </div>
+</div>
+
+<script>
+    /* --- Interactive Canvas Particle Background --- */
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+
+    let particles = [];
+    const particleCount = 60;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    class Particle {
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.radius = Math.random() * 2 + 1;
+        this.alpha = Math.random() * 0.5 + 0.2;
+        this.vx = (Math.random() - 0.5) * 0.4;
+        this.vy = -Math.random() * 0.6 - 0.2;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        if (this.y < 0 || this.x < 0 || this.x > canvas.width) {
+          this.reset();
+          this.y = canvas.height;
+        }
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${this.alpha})`;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#fff';
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(new Particle());
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    /* --- Countdown Logic --- */
+    let targetDate = null; // No date selected by default
+
+    const dateInput = document.getElementById('date-input');
+    dateInput.value = ''; // Ensure input is completely empty
+
+    // Auto-open date picker on page load
+    window.addEventListener('load', () => {
+      dateInput.focus();
+      if ('showPicker' in HTMLInputElement.prototype) {
+        try {
+          dateInput.showPicker();
+        } catch (e) {
+          // Fallback if browser blocks automatic picker opening
+        }
+      }
+    });
+
+    const tripInput = document.getElementById('trip-input');
+    const destinationTitle = document.getElementById('destination-title');
+
+    tripInput.addEventListener('input', (e) => {
+      if (!targetDate) {
+        destinationTitle.textContent = e.target.value ? e.target.value : 'Select Your Vacation';
+      }
+    });
+
+    dateInput.addEventListener('change', (e) => {
+      if (e.target.value) {
+        targetDate = new Date(e.target.value + 'T00:00:00');
+        updateCountdown();
+      }
+    });
+
+    function triggerPopAnimation(element, newValue) {
+      if (element.textContent !== newValue) {
+        element.textContent = newValue;
+        element.classList.remove('pop');
+        void element.offsetWidth;
+        element.classList.add('pop');
+      }
+    }
+
+    function updateCountdown() {
+      if (!targetDate) {
+        // If no target date is chosen yet, keep showing placeholders
+        return;
+      }
+
+      const now = new Date().getTime();
+      const difference = targetDate.getTime() - now;
+
+      const customTripName = tripInput.value.trim();
+
+      if (difference <= 0) {
+        document.getElementById('days').textContent = '00';
+        document.getElementById('hours').textContent = '00';
+        document.getElementById('minutes').textContent = '00';
+        document.getElementById('seconds').textContent = '00';
+        destinationTitle.textContent = customTripName ? `🎉 ${customTripName} is Here!` : "🎉 It's Vacation Time!";
+        return;
+      }
+
+      // If user typed a destination name, use it; otherwise use a generic title
+      destinationTitle.textContent = customTripName || 'My Vacation Countdown';
+
+      const d = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const h = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const m = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      const s = Math.floor((difference % (1000 * 60)) / 1000);
+
+      const format = (num) => String(num).padStart(2, '0');
+
+      triggerPopAnimation(document.getElementById('days'), format(d));
+      triggerPopAnimation(document.getElementById('hours'), format(h));
+      triggerPopAnimation(document.getElementById('minutes'), format(m));
+      triggerPopAnimation(document.getElementById('seconds'), format(s));
+    }
+
+    setInterval(updateCountdown, 1000);
+</script>
+</body>
+</html>
